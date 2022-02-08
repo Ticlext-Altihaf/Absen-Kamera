@@ -3,7 +3,7 @@ import cv2
 import os
 import sys
 from urllib.request import Request, urlopen
-
+import shutil
 
 
 def load(url):
@@ -28,20 +28,26 @@ def process(url):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     faces = face_cascade.detectMultiScale(img, 1.3, 5)
     print("Found:", len(faces), "faces")
+    #name from URL
     name = url.split('/')[-1]
     name = "faces_" + name
-    counter = 0
-    import shutil
+    
+    #cleanup
     try:
         shutil.rmtree(name)
     except:
         pass
+    #create directory
     os.mkdir(name)
     preview = img.copy()
+    counter = 0
     for (x,y,w,h) in faces:
+        #crop
         sub_img = img[y:y+h, x:x+w]
         cv2.imwrite(name + "/face_" + str(counter) + ".png", sub_img)
+        #files id
         counter += 1
+        #draw rectangle
         preview = cv2.rectangle(preview,(x,y),(x+w,y+h),(255,0,0),2)
     cv2.imwrite(name+".png", preview)
 
