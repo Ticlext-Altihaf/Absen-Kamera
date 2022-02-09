@@ -26,7 +26,7 @@ def process(url):
         raise Exception("Could not load image")
         
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    faces = face_cascade.detectMultiScale(img, 1.3, 5)
+    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
     print("Found:", len(faces), "faces")
     #name from URL
     name = url.split('/')[-1]
@@ -35,7 +35,7 @@ def process(url):
     #cleanup
     try:
         shutil.rmtree(name)
-    except:
+    except Exception as e:
         pass
     #create directory
     os.mkdir(name)
