@@ -1,0 +1,2 @@
+faiss-cpu==1.7.2
+deepface==0.0.73
