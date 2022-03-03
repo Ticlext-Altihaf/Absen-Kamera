@@ -6,32 +6,41 @@ import json
 import numpy as np
 import atexit
 
-
-#Files
+# Files
 dataFolder = "data"
-indexFile = dataFolder+"/vector.index"
-indexToIDFile = dataFolder+"/indexToID.json"
+indexFile = dataFolder + "/vector.index"
+indexToIDFile = dataFolder + "/indexToID.json"
 
-#Check
+# Check
 if not os.path.exists(dataFolder):
     os.makedirs(dataFolder)
 
-#Databases
-index = faiss.IndexFlatL2(preprocess.dimensions)
+# Databases
+faissIndex: faiss.IndexFlatL2(preprocess.dimensions)
 indexToID = {}
+
+"""
+indexToID[index] = identity: Any
+"""
 
 
 def load():
-    #restore
-    index = faiss.read_index("vector.index")
+    # restore
+    faissIndex = faiss.read_index("vector.index")
     with open(indexToIDFile, "r") as f:
         indexToID = json.load(f)
+    # assert both length same
+    assert len(indexToID) == faissIndex.ntotal
+
 
 def save():
-    #save
-    faiss.write_index(index, indexFile)
+    # assert both length same
+    assert len(indexToID) == faissIndex.ntotal
+    # save
+    faiss.write_index(faissIndex, indexFile)
     with open(indexToIDFile, "w") as f:
         json.dump(indexToID, f)
+
 
 if os.path.exists("vector.index"):
     try:
@@ -42,16 +51,19 @@ if os.path.exists("vector.index"):
         exit()
 
 
-
-def add(img_path, identity: int):
+def add_user(img_path, identity):
     """
     img_path: image path could be URL, Base64, or path
     identity: int
     """
+    # assert both still in sync
+    assert len(indexToID) == faissIndex.ntotal
     img = preprocess.toVector(img_path)
-    index.add(img)
-    indexToID[index.ntotal] = identity
-    save()
+    faissIndex.add(img)
+    le = faissIndex.ntotal
+    indexToID[le] = identity
+    return le
+
 
 def index(img_path, k=5):
     """
@@ -59,26 +71,29 @@ def index(img_path, k=5):
     return list of identity with distance
     []{
         distance: float
-        index: int
+        identity: Any
     }
     """
     return indexs([img_path], k)[0]
 
-def indexs(img_paths: List = None, k= 3):
+
+def indexs(img_paths: List = None, k=3):
     """
     img_paths: List of image paths could be URL, Base64, or path
     return list of identity with distance
     [batch][]{
         distance: float
-        index: int
+        identity: Any
     }
     """
+    # assert both length are still valid
+    assert len(indexToID) == faissIndex.ntotal
     imgs = []
-    for img_path in img_path:
+    for img_path in img_paths:
         img = preprocess.toVector(img_path)
         imgs.append(img)
     imgs = np.numpy(imgs)
-    distancesB, neighborsB = index.search(imgs, k)
+    distancesB, neighborsB = faissIndex.search(imgs, k)
     result = []
     for neighbors, distances in zip(neighborsB, distancesB):
         batch = []
@@ -89,13 +104,12 @@ def indexs(img_paths: List = None, k= 3):
             })
         result.append(batch)
     return result
-    
-    
 
-        
+
 def exit_handler():
     print("Saving databases...")
     save()
     print("Done!")
+
 
 atexit.register(exit_handler)
