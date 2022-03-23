@@ -16,7 +16,7 @@ if not os.path.exists(dataFolder):
     os.makedirs(dataFolder)
 
 # Databases
-faissIndex: faiss.IndexFlatL2(preprocess.dimensions)
+faissIndex = faiss.IndexFlatL2(preprocess.dimensions)
 indexToID = {}
 
 """
@@ -25,8 +25,14 @@ indexToID[index] = identity: Any
 
 
 def load():
+    #if not exists return
+    if not os.path.exists(indexFile):
+        return
+    if not os.path.exists(indexToIDFile):
+        return
+    global indexToID, faissIndex
     # restore
-    faissIndex = faiss.read_index("vector.index")
+    faissIndex = faiss.read_index(indexFile)
     with open(indexToIDFile, "r") as f:
         indexToID = json.load(f)
     # assert both length same
@@ -34,6 +40,7 @@ def load():
 
 
 def save():
+    global indexToID, faissIndex
     # assert both length same
     assert len(indexToID) == faissIndex.ntotal
     # save
@@ -54,11 +61,14 @@ if os.path.exists("vector.index"):
 def add_user(img_path, identity):
     """
     img_path: image path could be URL, Base64, or path
-    identity: int
+    identity: any
     """
+    global indexToID, faissIndex
     # assert both still in sync
     assert len(indexToID) == faissIndex.ntotal
     img = preprocess.toVector(img_path)
+    # to 1, dimesion shape
+    img = np.expand_dims(img, axis=0)
     faissIndex.add(img)
     le = faissIndex.ntotal
     indexToID[le] = identity
@@ -86,13 +96,14 @@ def indexs(img_paths: List = None, k=3):
         identity: Any
     }
     """
+    global indexToID, faissIndex
     # assert both length are still valid
     assert len(indexToID) == faissIndex.ntotal
     imgs = []
     for img_path in img_paths:
         img = preprocess.toVector(img_path)
         imgs.append(img)
-    imgs = np.numpy(imgs)
+    imgs = np.array(imgs)
     distancesB, neighborsB = faissIndex.search(imgs, k)
     result = []
     for neighbors, distances in zip(neighborsB, distancesB):
@@ -100,7 +111,7 @@ def indexs(img_paths: List = None, k=3):
         for neighbor, distance in zip(neighbors, distances):
             batch.append({
                 "distance": distance,
-                "index": indexToID[neighbor]
+                "index": indexToID[str(neighbor)]
             })
         result.append(batch)
     return result
