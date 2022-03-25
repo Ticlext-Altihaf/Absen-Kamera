@@ -6,6 +6,7 @@ from preprocess import drawDictOverPicture
 cap = cv2.VideoCapture(0)
 font = cv2.FONT_HERSHEY_PLAIN
 databases.load()
+
 while True:
     ret, frame = cap.read()
     if ret:

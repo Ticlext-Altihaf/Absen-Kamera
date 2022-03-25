@@ -17,6 +17,7 @@ if not os.path.exists(dataFolder):
 
 # Databases
 faissIndex = faiss.IndexFlatL2(preprocess.dimensions)
+#use redis ?
 indexToID = {}
 
 """
