@@ -70,12 +70,12 @@ def add_user(img_path, identity):
     # to 1, dimesion shape
     img = np.expand_dims(img, axis=0)
     faissIndex.add(img)
-    le = faissIndex.ntotal
+    le = faissIndex.ntotal - 1
     indexToID[le] = identity
     return le
 
 
-def index(img_path, k=5):
+def index(img_path, k=3):
     """
     img_path: image path could be URL, Base64, or path
     return list of identity with distance
