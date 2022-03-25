@@ -19,7 +19,9 @@ while True:
                     outcome[name] = 99999999999
                 if dist < outcome[name]:
                     outcome[name] = dist
-
+            # 0 = 100%
+            for out in outcome:
+                outcome[out] = 100 - outcome[out]
             drawDictOverPicture(frame, outcome)
         except Exception as e:
             tb = traceback.format_exc()
